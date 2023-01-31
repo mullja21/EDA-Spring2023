@@ -20,7 +20,7 @@ When we import data to R, data frame is the preferred way for storing the data b
 
 Let's look into a built-in data frame from package "datasets" - cars. The data give the speed of cars and the distances taken to stop.
 
-```{r cars}
+```{r cars, echo=FALSE}
 cars
 ```
 
@@ -107,12 +107,12 @@ ncol(df)
 nrow(df)  
 length(df)  #same as ncol
 summary(df)
-head(df) #show the first 6 rows of df
+head(df,6) #show the first 6 rows of df
 
 #If you know the number of the column you want you can refer to that to access column
 df[,1]
 
-#you could also use this notation to delete columns
-df <- df[,-2]
-df
+#you could also use this notation to delete columns use the minus with the name of the column to delete
+df3 <- df[,-2]
+df3
 ```
