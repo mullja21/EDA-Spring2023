@@ -71,6 +71,7 @@ These chemicals pose broader risks to biodiversity and food webs than previously
 5.  What are the dimensions of the dataset?
 
 ```{r}
+#checking dimensions for each data set
 dim(Neonics) 
 
 dim(Litter)
@@ -81,6 +82,8 @@ dim(Litter)
 6.  Using the `summary` function on the "Effect" column, determine the most common effects that are studied. Why might these effects specifically be of interest?
 
 ```{r}
+#summary of data Neonics
+
 summary(Neonics$Effect)
 
 ```
@@ -91,6 +94,8 @@ summary(Neonics$Effect)
 7.  Using the `summary` function, determine the six most commonly studied species in the dataset (common name). What do these species have in common, and why might they be of interest over other insects? Feel free to do a brief internet search for more information if needed.[TIP: The `sort()` command can sort the output of the summary command...]
 
 ```{r}
+#summary of Neonics Species data
+
 summary(Neonics$Species.Common.Name)
 
 ```
@@ -100,6 +105,8 @@ summary(Neonics$Species.Common.Name)
 8.  Concentrations are always a numeric value. What is the class of `Conc.1..Author.` column in the dataset, and why is it not numeric?
 
 ```{r}
+#checking column class
+
 class(Neonics$Conc.1..Author.)
 
 
@@ -112,7 +119,10 @@ class(Neonics$Conc.1..Author.)
 9.  Using `geom_freqpoly`, generate a plot of the number of studies conducted by publication year.
 
 ```{r}
+#load ggplot
 library(ggplot2)
+
+#create graph with geom_frequpoly and adujst the binwidth
 ggplot(Neonics, aes(x=Publication.Year)) + 
   geom_freqpoly(binwidth=10)
 
@@ -122,6 +132,8 @@ ggplot(Neonics, aes(x=Publication.Year)) +
 10. Reproduce the same graph but now add a color aesthetic so that different Test.Location are displayed as different colors.
 
 ```{r}
+#create a test location graph with geom_poly and add colors 
+
 ggplot(Neonics, aes(x=Publication.Year, color=Test.Location)) + 
   geom_freqpoly(binwidth=10) +
   theme_bw()
@@ -139,6 +151,8 @@ Interpret this graph. What are the most common test locations, and do they diffe
 [**TIP**: Add `theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))` to the end of your plot command to rotate and align the X-axis labels...]
 
 ```{r}
+#Creating bar graph to determine common end points
+
 ggplot(Neonics, aes(x=Endpoint)) +
   geom_bar() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
@@ -153,6 +167,7 @@ ggplot(Neonics, aes(x=Endpoint)) +
 12. Determine the class of collectDate. Is it a date? If not, change to a date and confirm the new class of the variable. Using the `unique` function, determine which dates litter was sampled in August 2018.
 
 ```{r}
+
 class(Litter$collectDate)
 
 #change collectDate to a date instead of factor
@@ -182,6 +197,8 @@ unique(Litter$plotID)
 14. Create a bar graph of functionalGroup counts. This shows you what type of litter is collected at the Niwot Ridge sites. Notice that litter types are fairly equally distributed across the Niwot Ridge sites.
 
 ```{r}
+#create bar graph of functionalGroup counts
+
 ggplot(Litter, aes(x=functionalGroup)) +
 geom_bar()
 
@@ -190,6 +207,8 @@ geom_bar()
 15. Using `geom_boxplot` and `geom_violin`, create a boxplot and a violin plot of dryMass by functionalGroup.
 
 ```{r}
+
+#create box plot for functionalGroup by amount of dry mass
 ggplot(Litter, aes(x=functionalGroup, y=dryMass)) +
   geom_boxplot()
 
