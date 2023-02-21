@@ -5,7 +5,7 @@ date: "Spring 2023"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ## Objectives
@@ -19,7 +19,9 @@ editor_options:
 
 ```{r, message = FALSE, warning = FALSE}
 #Import basic libraries
-library(tidyverse);library(lubridate);library(here)
+library(tidyverse)
+library(lubridate)
+library(here)
 
 #Library for creating ridge plots
 library(ggridges)
@@ -31,6 +33,8 @@ library(colormap)
 
 #Add pre-set themes <--NEW
 library(ggthemes)
+
+
 ```
 
 ## Expression function and Saving plots
@@ -38,7 +42,8 @@ library(ggthemes)
 The expression function can be used when you want to add mathematical symbols and subscripts mixed with regular letter to labels. 
 
 ```{r formatted text}
-
+#Paste command concatenates two things. Expression lets r know it's an expression and not raw text
+#warning is something you want to take a look at, but may not need to fix. You must fix error messages 
 #Create a plot
 Plot_text <-
 ggplot(data=data.frame(x=0,y=0))+
@@ -46,7 +51,7 @@ ggplot(data=data.frame(x=0,y=0))+
   geom_text(
     x=0,
     y=0.025,
-    label=expression(paste("Mean is ", mu,",", R^{2},'=0.6'))
+    label= expression(paste("Mean is ", mu,", ", R^{2},'=0.6'))
     )
 
 #Print the plot
@@ -62,6 +67,7 @@ ggsave(
   dpi = 300
   )
 
+
 ```
 
 ---
@@ -69,11 +75,14 @@ ggsave(
 ## Import Datasets
 *Note the use of a string variable the points to the location of the data combined with the `here()` package functionality. This enables us to quickly change where we get our data, i.e., by changing one line of code vs each `read.csv()` command.* 
 
-```{r, message = FALSE, warning = FALSE}
+```{r importing data sets, message=FALSE, warning=FALSE}
 #Assign a variable to the processed data folder location
+#string that matches data location 
 processed_data = "Data/Processed_KEY"
 
 #Read in data
+#here always points to where the r project
+#more stable than set wd
 PeterPaul.chem.nutrients <- read.csv(
   here(processed_data,"NTL-LTER_Lake_Chemistry_Nutrients_PeterPaul_Processed.csv"),
   stringsAsFactors = TRUE)
@@ -83,6 +92,7 @@ EPAair <- read.csv(
   stringsAsFactors = TRUE)
 
 #Fix dates
+#use lubridate and not as.Date
 PeterPaul.chem.nutrients$sampledate <- ymd(PeterPaul.chem.nutrients$sampledate)
 EPAair$Date <- ymd(EPAair$Date)
 
@@ -90,21 +100,61 @@ EPAair$Date <- ymd(EPAair$Date)
 
 ## A note on factors in plots...
 Say we want to plot the number of records each month in the Peter/Paul lakes dataset. How might we do that? What challenges do we face? 
+#factors are useful for analyzing and visualizing categorical data 
+#strings as factors = true
+#Factors can have levels and labels
+
 
 ```{r Plot the number of records by month}
 #What kind of values are months?
+#glimpse is more friendly when we want to print out things
+class(PeterPaul.chem.nutrients$month)
+glimpse(PeterPaul.chem.nutrients$month)
 
 #List unique values
 
+unique(PeterPaul.chem.nutrients$month)
+
 #Plot how many Lake observations occur each month
+ggplot(PeterPaul.chem.nutrients, 
+       aes(x=month)) + 
+  geom_histogram(bins=12)
 
 #Convert month to a factor -- with 12 levels, labelled with month names
+#can convert something with as.factor or factor but factor is more versatile
+#we defined levels to the factor
+factor(PeterPaul.chem.nutrients$month,
+       levels = 1:12,
+       labels= month.abb)
+
 
 #Try again: Plot how many Lake observations occur each month
+ggplot(PeterPaul.chem.nutrients, 
+       aes(x=factor(month))) + 
+  geom_bar()
+
 
 #Alter to include missing months
+#set the levels 
+#Scale discrete asks r to show the empty categories
+ggplot(PeterPaul.chem.nutrients, 
+       aes(x=factor(month, levels=1:12))) + 
+  geom_bar() +
+  scale_x_discrete(drop=FALSE)
+
 
 #Tidy up the code
+#Labs allows you to clean up your plot and add your own labels
+ggplot(PeterPaul.chem.nutrients, 
+       aes(x=factor(month, levels=1:12, labels=month.abb))) + 
+  geom_bar() +
+  scale_x_discrete(drop=FALSE) +
+  labs(
+    title = "My Plot",
+    x= "Month")
+
+#if you want to wrangle your data before putting into a plot, then you may want to pipe your data into a filter and then pipe that result into ggplot (you'll want to do ggplot last). The code can be as long as it needs to be, but if you tidy it up, then it becomes easier to see where you went wrong.
+
 
 ```
 
@@ -151,11 +201,21 @@ surface_temp_1999_plot +
   theme_wsj() + 
   scale_color_wsj()
 
+#view enables you to see what you can modify within the theme
+#type into console View(theme_wsj())
+
+#or excel theme
+surface_temp_1999_plot + 
+  theme_excel() + 
+  scale_color_excel()
+
 #Add a title
 surface_temp_1999_plot + 
   ggtitle("Surface temperature, 1999") +
   labs(color='Lake') + 
   theme_wsj()
+
+
 ```
 
 
@@ -222,12 +282,30 @@ Scales in ggplot are used to map data values to aesthetic properties of plot ele
 
 Exercise: build your own scatterplots of PeterPaul.chem.nutrients
 
-```{r, fig.height = 3, fig.width = 4, warning = FALSE}
+```{r fig.height=3, fig.width=4, warning=FALSE}
 
 # 1. 
 # Plot surface temperatures by day of  year. 
 # Color your points by year, and facet by lake in two rows.
 # Change the ylab name
+# set points uniformly at 0.5. Alpha sets the transparency at a value between 0 and 1.
+#facet wrap allows us to add another dimension to better visualize the data
+Surface_Temp_by_Day_Plot <- PeterPaul.chem.nutrients %>% 
+  filter(depth == 0) %>% 
+  ggplot(aes
+         (x=daynum,
+           y=temperature_C,
+           color=year4)
+         ) + 
+  geom_point(size=0.5, alpha=0.5) +
+  facet_wrap(vars(lakename)) +
+  labs(
+    title = "surface temperature vs day of the year by year",
+    y= "Surface Temperature (C)",
+    x= "day of the year",
+    color= "year")
+
+
 
 
 #2. 
