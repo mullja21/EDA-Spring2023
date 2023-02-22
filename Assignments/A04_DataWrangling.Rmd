@@ -2,10 +2,14 @@
 title: "Assignment 4: Data Wrangling"
 author: "Student Name"
 <<<<<<< HEAD
+<<<<<<< HEAD
 date: "Spring 2023"
 =======
 <<<<<<< HEAD
 >>>>>>> 19e08a4 (Lab 4 commit done)
+=======
+date: "Spring 2023"
+>>>>>>> 62f975e (update A4)
 output: pdf_document
 geometry: margin=2.54cm
 ---
