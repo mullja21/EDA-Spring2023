@@ -32,6 +32,8 @@ This exercise accompanies the lessons in Environmental Data Analytics on Data Vi
 
 ```{r initialize project}
 #1 
+library(ggplot2)
+
 
 #2 
 
