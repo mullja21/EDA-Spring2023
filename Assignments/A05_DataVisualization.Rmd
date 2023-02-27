@@ -7,7 +7,7 @@ geometry: margin=2.54cm
 fig_height: 3
 fig_width: 4
 editor_options: 
-  chunk_output_type: inline
+chunk_output_type: inline
 ---
 
 ## OVERVIEW
@@ -61,6 +61,7 @@ class(PeterPaul.chem.nutrients$sampledate)
 
 ```{r build plot theme}
 #3
+library(ggthemes)
 my_theme <- theme_base() + 
   theme(
     line = element_line(
@@ -73,9 +74,7 @@ my_theme <- theme_base() +
     ),
     legend.title = element_text(
       color='blue'
-    )
-    
-  )
+    ))
 
 
 ```
@@ -120,24 +119,66 @@ Tip: R has a build in variable called `month.abb` that returns a list of months;
 peterpaul.Temp.box.plot <- 
   ggplot(PeterPaul.chem.nutrients, aes(
          x = factor(month),
-         y = ,
+         y = temperature_C,
          color = lakename)) +
   geom_boxplot() +
-  facet_wrap(vars(lakename)) +
   labs(
-    title = "Peter Lake and Paul Lake Phosphorous vs Phosphate",
-    y= "Phosphorous Concentration",
-    x= "Phosphate Concentration",
-    color= "year") 
+    title = "Temperature vs Month",
+    y= "Temperature in Degrees C",
+    x= "Month") 
 
-print(peterpaul.Temp)
+print(peterpaul.Temp.box.plot)
 
 
 #TP Box Plot
+peterpaul.TP.box.plot <- 
+  ggplot(PeterPaul.chem.nutrients, aes(
+         x = factor(month),
+         y = tp_ug,
+         color = lakename)) +
+  geom_boxplot() +
+  labs(
+    title = "TP vs Month",
+    y= "TP",
+    x= "Month") 
 
+print(peterpaul.TP.box.plot)
 
 
 #TN Box Plot
+peterpaul.TN.box.plot <- 
+  ggplot(PeterPaul.chem.nutrients, aes(
+         x = factor(month),
+         y = tn_ug,
+         color = lakename)) +
+  geom_boxplot() +
+  labs(
+    title = "TN vs Month",
+    y= "TN",
+    x= "Month") 
+
+print(peterpaul.TN.box.plot)
+
+
+#Creating a cowplot
+library(cowplot)
+
+legend_cow <- get_legend(
+  peterpaul.TN.box.plot + 
+  guides(color = guide_legend(nrow = 1)) +
+  theme(legend.position = "right"))
+
+
+
+peter.paul.cowplot <- plot_grid(
+  peterpaul.Temp.box.plot + theme(legend.position="none"),
+  peterpaul.TN.box.plot + theme(legend.position="none"),
+  peterpaul.TP.box.plot + theme(legend.position="none"),
+  hjust = -1,
+  nrow = 1,
+  legend_cow
+  )
+print(peter.paul.cowplot)
 
 
 
@@ -145,7 +186,7 @@ print(peterpaul.Temp)
 
 Question: What do you observe about the variables of interest over seasons and between lakes? 
 
-> Answer: 
+> Answer: Temperature peaks in the summer months for both lakes. TP peaks in the summer for Peter Lake and is at a minimum for Paul lake. TN appears to be relatively consistent throughout the year.
 
 6. [Niwot Ridge] Plot a subset of the litter dataset by displaying only the "Needles" functional group. Plot the dry mass of needle litter by date and separate by NLCD class with a color aesthetic. (no need to adjust the name of each land use)
 
@@ -153,12 +194,47 @@ Question: What do you observe about the variables of interest over seasons and b
 
 ```{r Plot litter}
 #6
+Niwot.Ridge.plot1.litter <- PeterPaul.Niwot.Litter %>%
+  filter(functionalGroup == "Needles") %>% 
+  ggplot( 
+    aes(
+         x = collectDate,
+         y = dryMass,
+         color = nlcdClass)) +
+  geom_point() +
+  labs(
+    title = "Niwot Ridge Dry Mass vs Collection Date",
+    y= "Dry Mass",
+    x= "Collection Date",
+    color= "NLCD Class")
+
+print(Niwot.Ridge.plot1.litter)
 
 
 #7
+Niwot.Ridge.plot1.litter <- PeterPaul.Niwot.Litter %>%
+  filter(functionalGroup == "Needles") %>% 
+  ggplot( 
+    aes(
+         x = collectDate,
+         y = dryMass,
+         color = nlcdClass)) +
+  geom_point() +
+  facet_wrap(vars(nlcdClass)) +
+  labs(
+    title = "Niwot Ridge Dry Mass vs Collection Date",
+    y= "Dry Mass",
+    x= "Collection Date",
+    color= "NLCD Class")
+
+print(Niwot.Ridge.plot1.litter)
+
 
 
 ```
 Question: Which of these plots (6 vs. 7) do you think is more effective, and why? 
 
-> Answer:
+> Answer: The second one is more effective because it's easier to see variations within each NLCD class. 
+
+
+
