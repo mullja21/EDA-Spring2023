@@ -7,7 +7,7 @@ geometry: margin=2.54cm
 fig_height: 3
 fig_width: 4
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ## OVERVIEW
@@ -31,11 +31,24 @@ This exercise accompanies the lessons in Environmental Data Analytics on Data Vi
 2. Make sure R is reading dates as date format; if not change the format to date.
 
 ```{r initialize project}
-#1 
+#1 Loading packages
 library(ggplot2)
+library(lubridate)
+library(tidyverse)
+library(here)
+here()
 
+PeterPaul.chem.nutrients <- 
+  read.csv(here("Data/Processed/NTL-LTER_Lake_Chemistry_Nutrients_PeterPaul_Processed.csv"),
+           stringsAsFactors = T)
+PeterPaul.Niwot.Litter <- 
+  read.csv(here("Data/Processed/NEON_NIWO_Litter_mass_trap_Processed.csv"),
+           stringsAsFactors = T)
 
 #2 
+PeterPaul.chem.nutrients$sampledate <- ymd(PeterPaul.chem.nutrients$sampledate)
+PeterPaul.Niwot.Litter$collectDate <- ymd(PeterPaul.Niwot.Litter$collectDate)
+class(PeterPaul.chem.nutrients$sampledate)
 
 ```
 ## Define your theme
@@ -48,6 +61,22 @@ library(ggplot2)
 
 ```{r build plot theme}
 #3
+my_theme <- theme_base() + 
+  theme(
+    line = element_line(
+      color='black',
+      linewidth =2
+    ),
+    legend.background = element_rect(
+      color='grey',
+      fill = 'green'
+    ),
+    legend.title = element_text(
+      color='blue'
+    )
+    
+  )
+
 
 ```
 
@@ -58,6 +87,25 @@ For numbers 4-7, create ggplot graphs and adjust aesthetics to follow best pract
 
 ```{r plot total P vs PO4}
 #4 
+peterpaul.Phos.plot1 <- 
+  ggplot(PeterPaul.chem.nutrients, aes(
+         x = po4,
+         y = tp_ug,
+         color = lakename)) +
+  geom_point() +
+  geom_smooth(method=lm, se=FALSE, color= "black") +
+   xlim(0, 40) +
+  ylim(0, 110) +
+  facet_wrap(vars(lakename)) +
+  labs(
+    title = "Peter Lake and Paul Lake Phosphorous vs Phosphate",
+    y= "Phosphorous Concentration",
+    x= "Phosphate Concentration",
+    color= "year") 
+
+print(peterpaul.Phos.plot1)
+
+
 
 ```
 
@@ -68,6 +116,30 @@ Tip: R has a build in variable called `month.abb` that returns a list of months;
 
 ```{r Create boxplots}
 #5 
+#Temperature Box Plot
+peterpaul.Temp.box.plot <- 
+  ggplot(PeterPaul.chem.nutrients, aes(
+         x = factor(month),
+         y = ,
+         color = lakename)) +
+  geom_boxplot() +
+  facet_wrap(vars(lakename)) +
+  labs(
+    title = "Peter Lake and Paul Lake Phosphorous vs Phosphate",
+    y= "Phosphorous Concentration",
+    x= "Phosphate Concentration",
+    color= "year") 
+
+print(peterpaul.Temp)
+
+
+#TP Box Plot
+
+
+
+#TN Box Plot
+
+
 
 ```
 
