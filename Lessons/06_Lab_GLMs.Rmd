@@ -5,7 +5,7 @@ date: "Spring 2023"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ## Objectives
@@ -34,6 +34,8 @@ mytheme <- theme_classic(base_size = 14) +
   theme(axis.text = element_text(color = "black"), 
         legend.position = "top")
 theme_set(mytheme)
+
+
 ```
 
 
@@ -48,6 +50,39 @@ Create three plots, each with appropriately formatted axes and legends. Choose a
 
 ```{r}
 #Exercise 1:
+# geom_density of ozone divided by year 
+plot1.ozone.by.year <-
+  ggplot(EPAair, aes(
+    x = Ozone,
+    fill=as.factor(Year))) +
+  geom_density(alpha=.5) +
+  scale_fill_manual(values =c("darkgreen", "darkblue")) +
+  labs(x="Ozone AQI value", y="Density", fill="")
+print(plot1.ozone.by.year)
+
+
+# geom_boxplot of ozone divided by year 
+plot2.ozone.by.year <-
+  ggplot(EPAair, aes(
+    x = as.factor(Year),
+    y= Ozone)) +
+   geom_boxplot() +
+  stat_summary(geom="text", fun=max, vjust=1, size=4, label= c("b","a")) +
+  labs(x="", y="Ozone AQI value")
+print(plot2.ozone.by.year)
+
+
+
+## geom_violin of ozone divided by year 
+plot3.ozone.by.year <-
+  ggplot(EPAair, aes(
+    x = as.factor(Year),
+    y= Ozone)) +
+   geom_violin(draw_quantiles = 0.5) +
+  stat_summary(geom="text", fun=max, vjust=1, size=4, label= c("b","a")) +
+  labs(x="", y="Ozone AQI value") +
+  ylim(0,150)
+print(plot3.ozone.by.year)
 
 
 ```
@@ -61,10 +96,21 @@ For the NTL-LTER dataset, can we predict PM2.5 from Ozone?
 ```{r}
 
 #Exercise 2: Run a linear regression PM2.5 by Ozone. Find the p-value and R-squared value. 
+PM2.5.regression.ozone <- lm(data = EPAair, PM2.5 ~ Ozone)
+summary(PM2.5.regression.ozone)
+
 
 
 
 #Exercise 3: Build a scatterplot. Add a line and standard error for the linear regression. Add the regression equation to the plot
+PM2.5.by.Ozone <- 
+  ggplot(EPAair, aes(x = Ozone, y = PM2.5)) +
+   geom_point() +
+  geom_smooth(method = "lm", color="blue") +
+  ylim(0, 85) 
+print(PM2.5.by.Ozone) 
+
+#se=False removes the standard error area around the line
 
 
 
@@ -78,16 +124,32 @@ What other variables can we add to improve model?
 ```{r}
 
 #Exercise 4: Build correlation plots and identify more possible explanatory variables to add to the regression.
+library(corrplot)
 
+EPAair.Subset <- 
+  EPAair %>%
+  select(mean_Lat: Ozone) %>%
+  drop_na()
 
-
+#This allows us to see how variables are correlated. Produces a matrix of each one of the elements correlated with each other. Then visualize the matrix with a corr plot
+EPAairCorr <- cor(EPAair.Subset)
+corrplot.mixed(EPAairCorr,upper="ellipse")
+#Mixed has the numbers of the correlation in addition to the color. The darker the ellipse, the stronger the correlation and shows whether or not it's positive or negative correlation.
+#Can't add categorical variables to the corrplot
 
 #Exercise 5: Choose a model by AIC in a Stepwise Algorithm. Do the results from AIC match the variables you selected on Exercise 4?
 
-
-
+Ozone.ALL <- lm(data=EPAair.Subset, PM2.5 ~ Ozone + Year + Month + mean_Lat + mean_Lng)
+summary(Ozone.ALL)
+step(Ozone.ALL)
+#step function removes variables for you. shows that if you eliminate year, you'll have a better model. 
+#Remove year then run 
 
 #Exercise 6: Run another regression using the variables selected on Exercise 6. Compare r-squared value with the one from Exercise 2. 
+Ozone.Best <- lm(data=EPAair.Subset, PM2.5 ~ Ozone + Month + mean_Lat + mean_Lng)
+summary(Ozone.Best)
+step(Ozone.Best)
+
 
 ```
 
@@ -122,6 +184,8 @@ Litter.Totals.plot <- ggplot(Litter.Totals, aes(x = plotID, y = dryMass)) +
   labs(x = "Plot ID", y = "Dry Mass (g)") +
   ylim(0, 85)
 print(Litter.Totals.plot)
+
+
 
 ```
 
