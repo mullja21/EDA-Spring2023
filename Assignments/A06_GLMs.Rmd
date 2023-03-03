@@ -1,6 +1,6 @@
 ---
 title: "Assignment 6: GLMs (Linear Regressios, ANOVA, & t-tests)"
-author: "Student Name"
+author: "Jordan Mullens"
 date: "Spring 2023"
 output: pdf_document
 geometry: margin=2.54cm
@@ -13,7 +13,7 @@ editor_options:
 This exercise accompanies the lessons in Environmental Data Analytics on generalized linear models. 
 
 ## Directions
-1. Rename this file `<FirstLast>_A06_GLMs.Rmd` (replacing `<FirstLast>` with your first and last name).
+1. Rename this file `JordanMullens_A06_GLMs.Rmd` (replacing `<FirstLast>` with your first and last name).
 2. Change "Student Name" on line 3 (above) with your name.
 3. Work through the steps, **creating code and output** that fulfill each instruction.
 4. Be sure to **answer the questions** in this assignment document.
@@ -27,10 +27,35 @@ This exercise accompanies the lessons in Environmental Data Analytics on general
 
 ```{r setup2}
 #1
+library(tidyverse)
+library(agricolae)   
+library(here)
+library(lubridate)
+library(ggplot2)
+library(agricolae)
+here()
 
+NTLLTR.raw <- read.csv(here("Data/Raw/NTL-LTER_Lake_ChemistryPhysics_Raw.csv"), stringsAsFactors = TRUE)
+
+NTLLTR.raw$sampledate <- as.Date(NTLLTR.raw$sampledate , format = "%Y-%m-%d")
+class(NTLLTR.raw$sampledate)
 
 #2
-
+library(ggthemes)
+my_theme <- theme_base() + 
+  theme(
+    line = element_line(
+      color='black',
+      linewidth =2
+    ),
+    legend.background = element_rect(
+      color='grey',
+      fill = 'green'
+    ),
+    legend.title = element_text(
+      color='blue'
+    ))
+theme_set(my_theme)
 
 ```
 
@@ -38,8 +63,8 @@ This exercise accompanies the lessons in Environmental Data Analytics on general
 Our first research question is: Does mean lake temperature recorded during July change with depth across all lakes?
 
 3. State the null and alternative hypotheses for this question:
-> Answer:
-H0: 
+> Answer: 
+H0: Mean lake temperature 
 Ha: 
 
 
@@ -52,6 +77,13 @@ Ha:
 
 ```{r scatterplot}
 #4
+
+NTLLTR.wrangled <- NTLLTR.raw %>%
+  filter(sampledate == month(""))
+  select(lakename, year4, daynum, depth, temperature_C) %>%
+  drop_na(temperature_C)
+
+
 
 
 #5
