@@ -5,7 +5,7 @@ date: "Spring 2023"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ## OVERVIEW
@@ -30,14 +30,13 @@ This exercise accompanies the lessons in Environmental Data Analytics on general
 library(tidyverse)
 library(agricolae)   
 library(here)
-library(lubridate)
 library(ggplot2)
 library(agricolae)
 here()
 
 NTLLTR.raw <- read.csv(here("Data/Raw/NTL-LTER_Lake_ChemistryPhysics_Raw.csv"), stringsAsFactors = TRUE)
 
-NTLLTR.raw$sampledate <- as.Date(NTLLTR.raw$sampledate , format = "%Y-%m-%d")
+NTLLTR.raw$sampledate <- mdy(NTLLTR.raw$sampledate)
 class(NTLLTR.raw$sampledate)
 
 #2
@@ -64,8 +63,8 @@ Our first research question is: Does mean lake temperature recorded during July 
 
 3. State the null and alternative hypotheses for this question:
 > Answer: 
-H0: Mean lake temperature 
-Ha: 
+H0: Mean lake temperature is the same across lakes and depths
+Ha: Mean lake temperature is different across lakes and depths
 
 
 4.  Wrangle your NTL-LTER dataset with a pipe function so that the records meet the following criteria: 
@@ -77,17 +76,23 @@ Ha:
 
 ```{r scatterplot}
 #4
+NTLLTR.raw <- mutate(NTLLTR.raw, month = month(sampledate)) 
+
 
 NTLLTR.wrangled <- NTLLTR.raw %>%
-  filter(sampledate == month(""))
+  filter(month == 7) %>%
   select(lakename, year4, daynum, depth, temperature_C) %>%
-  drop_na(temperature_C)
-
-
+  drop_na(temperature_C) 
 
 
 #5
-
+NTLLTR.Temp.plot1 <- 
+  ggplot(NTLLTR.wrangled, aes(x = depth, y = temperature_C)) +
+   geom_point() +
+  geom_smooth(method = "lm", color="blue") +
+  ylim(0, 35) +
+  my_theme
+print(NTLLTR.Temp.plot1) 
 
 ```
 
@@ -101,6 +106,9 @@ NTLLTR.wrangled <- NTLLTR.raw %>%
 
 ```{r linear.regression}
 #7
+NTLLTR.Temp.Regression <- lm(data = NTLLTR.wrangled, temperature_C ~ depth)
+summary(NTLLTR.Temp.Regression)
+
 
 
 ```
@@ -108,7 +116,7 @@ NTLLTR.wrangled <- NTLLTR.raw %>%
 
 8. Interpret your model results in words. Include how much of the variability in temperature is explained by changes in depth, the degrees of freedom on which this finding is based, and the statistical significance of the result. Also mention how much temperature is predicted to change for every 1m change in depth. 
 
-> Answer:
+> Answer: 
 
 
 ---
@@ -123,13 +131,19 @@ Let's tackle a similar question from a different approach. Here, we want to expl
 
 ```{r temperature.model}
 #9
+Temp.AIC <- lm(data = NTLLTR.wrangled, temperature_C ~ depth + year4 + 
+              daynum)
+summary(Temp.AIC)
+```
 
-
-
+``` {r, fig.height = 3, fig.width = 4}
 #10
-
+Temp.multi.regression <- lm(data = NTLLTR.wrangled, temperature_C ~ depth + daynum)
+summary(Temp.multi.regression)
 
 ```
+
+
 
 11. What is the final set of explanatory variables that the AIC method suggests we use to predict temperature in our multiple regression? How much of the observed variance does this model explain? Is this an improvement over the model using only depth as the explanatory variable?
 
@@ -144,7 +158,53 @@ Let's tackle a similar question from a different approach. Here, we want to expl
 
 ```{r anova.model}
 #12
+# Wrangle the data
+Temp.Different.Lakes <- NTLLTR.wrangled %>%
+  group_by(lakename, daynum, year4)
+ 
+summary(Temp.Different.Lakes)
 
+
+#results: reject null in all except two: NIWO_057 and NIWO_046
+#but method is robust from small deviations from normal distribution
+qqnorm(NTLLTR.wrangled$temperature_C); qqline(NTLLTR.wrangled$temperature_C)
+
+# Test for equal variance
+# ANOVA is robust against departures from equal variance.
+# bartlett.test() performs Bartlett's test of the null that the variances in each of the groups (samples) are the same.
+bartlett.test(Temp.Different.Lakes$temperature_C ~ Temp.Different.Lakes$lakename)
+
+#results: reject null i.e. variances are not equal
+
+# Format ANOVA as aov
+Temp.Different.Lakes.anova <- aov(data = Temp.Different.Lakes, temperature_C ~ lakename)
+summary(Temp.Different.Lakes.anova)
+
+#results: reject null hypothesis i.e. difference between a pair of group means is statistically significant
+
+# Format ANOVA as lm
+Temp.Different.Lakes.anova.2 <- lm(data = Temp.Different.Lakes, temperature_C ~ lakename)
+summary(Temp.Different.Lakes.anova.2)
+
+# Checking model fit and assumptions
+# ANOVA is robust against departures from normality.
+plot(Temp.Different.Lakes.anova.2)
+
+# Extract groupings for pairwise relationships
+Temp.Different.Lakes.groups <- HSD.test(Temp.Different.Lakes.anova, "lakename", group = TRUE)
+Temp.Different.Lakes.groups
+
+# Graph the results
+Temp.Different.Lakes.plot <- ggplot(Temp.Different.Lakes, aes(x = lakename, y = temperature_C)) +
+  geom_boxplot() +
+  labs(x = "Lake", y = "Temperature (C)") +
+  stat_summary(geom = "text", fun = max, vjust = -1, size = 3.5,
+               label = c("abc", "ab", "abcd", "bcd", "bcd", "a", 
+                         "d", "abcd", "cd")) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+  ylim(0, 35)
+  
+print(Temp.Different.Lakes.plot)
 
 ```
 
@@ -158,6 +218,21 @@ Let's tackle a similar question from a different approach. Here, we want to expl
 
 ```{r scatterplot.2}
 #14.
+Temp.Different.Lakes.Scatter <- 
+  ggplot(Temp.Different.Lakes, aes(
+         x = depth,
+         y = temperature_C,
+         color = lakename)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method=lm, se=FALSE, color= "black") +
+  ylim(0, 35) +
+  labs(
+    title = "Lake July Temperature Vs Depth",
+    y= "Temperature (C)",
+    x= "Depth",
+    color= "lakename") 
+
+print(Temp.Different.Lakes.Scatter)
 
 
 ```
@@ -166,7 +241,9 @@ Let's tackle a similar question from a different approach. Here, we want to expl
 
 ```{r tukey.test}
 #15
-
+# Post-hoc test
+# TukeyHSD() computes Tukey Honest Significant Differences
+TukeyHSD(Temp.Different.Lakes.anova)
 
 ```
 
@@ -185,6 +262,12 @@ Let's tackle a similar question from a different approach. Here, we want to expl
 18. Wrangle the July data to include only records for Crampton Lake and Ward Lake. Run the two-sample T-test on these data to determine whether their July temperature are same or different. What does the test say? Are the mean temperatures for the lakes equal? Does that match you answer for part 16?
 
 ```{r t.test}
+#Wrangling the data
+
+
+
+
+
 
 ```
 
