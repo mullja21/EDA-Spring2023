@@ -32,11 +32,12 @@ library(agricolae)
 library(here)
 library(ggplot2)
 library(agricolae)
+library(lubridate)
 here()
 
 NTLLTR.raw <- read.csv(here("Data/Raw/NTL-LTER_Lake_ChemistryPhysics_Raw.csv"), stringsAsFactors = TRUE)
 
-NTLLTR.raw$sampledate <- mdy(NTLLTR.raw$sampledate)
+NTLLTR.raw$sampledate <- myd(NTLLTR.raw$sampledate)
 class(NTLLTR.raw$sampledate)
 
 #2
@@ -99,7 +100,7 @@ print(NTLLTR.Temp.plot1)
 
 6. Interpret the figure. What does it suggest with regards to the response of temperature to depth? Do the distribution of points suggest about anything about the linearity of this trend?
 
-> Answer: 
+> Answer: It suggests temperature decreases as depth increases. Upon first inspection, the relationship could be linear from depths of 0 to about 8 meters. An exponential function may fit the data better. 
 
 
 7. Perform a linear regression to test the relationship and display the results
@@ -109,14 +110,16 @@ print(NTLLTR.Temp.plot1)
 NTLLTR.Temp.Regression <- lm(data = NTLLTR.wrangled, temperature_C ~ depth)
 summary(NTLLTR.Temp.Regression)
 
-
+par(mfrow = c(2,2), mar=c(4,4,4,4))
+plot(NTLLTR.Temp.Regression)
+par(mfrow = c(1,1))
 
 ```
 
 
 8. Interpret your model results in words. Include how much of the variability in temperature is explained by changes in depth, the degrees of freedom on which this finding is based, and the statistical significance of the result. Also mention how much temperature is predicted to change for every 1m change in depth. 
 
-> Answer: 
+> Answer: The test has 9726 degrees of freedom. The results suggest that we reject the null hypothesis. Temperature is predicted to change 1.94 degrees C per meter.
 
 
 ---
@@ -138,7 +141,7 @@ summary(Temp.AIC)
 
 ``` {r, fig.height = 3, fig.width = 4}
 #10
-Temp.multi.regression <- lm(data = NTLLTR.wrangled, temperature_C ~ depth + daynum)
+Temp.multi.regression <- lm(data = NTLLTR.wrangled, temperature_C ~ depth + daynum + year4)
 summary(Temp.multi.regression)
 
 ```
@@ -147,7 +150,7 @@ summary(Temp.multi.regression)
 
 11. What is the final set of explanatory variables that the AIC method suggests we use to predict temperature in our multiple regression? How much of the observed variance does this model explain? Is this an improvement over the model using only depth as the explanatory variable?
 
-> Answer: 
+> Answer: We could use depth, daynum, and year. However, daynum and depth appear to be stronger predictors of temperature than year.
 
 
 
@@ -198,11 +201,8 @@ Temp.Different.Lakes.groups
 Temp.Different.Lakes.plot <- ggplot(Temp.Different.Lakes, aes(x = lakename, y = temperature_C)) +
   geom_boxplot() +
   labs(x = "Lake", y = "Temperature (C)") +
-  stat_summary(geom = "text", fun = max, vjust = -1, size = 3.5,
-               label = c("abc", "ab", "abcd", "bcd", "bcd", "a", 
-                         "d", "abcd", "cd")) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
-  ylim(0, 35)
+  ylim(0, 35) 
   
 print(Temp.Different.Lakes.plot)
 
@@ -210,7 +210,7 @@ print(Temp.Different.Lakes.plot)
 
 13. Is there a significant difference in mean temperature among the lakes? Report your findings. 
 
-> Answer: 
+> Answer: Yes. 
 
 
 
@@ -230,7 +230,8 @@ Temp.Different.Lakes.Scatter <-
     title = "Lake July Temperature Vs Depth",
     y= "Temperature (C)",
     x= "Depth",
-    color= "lakename") 
+    color= "lakename") +
+  my_theme
 
 print(Temp.Different.Lakes.Scatter)
 
@@ -245,17 +246,19 @@ print(Temp.Different.Lakes.Scatter)
 # TukeyHSD() computes Tukey Honest Significant Differences
 TukeyHSD(Temp.Different.Lakes.anova)
 
+
+
 ```
 
 16.From the findings above, which lakes have the same mean temperature, statistically speaking, as Peter Lake? Does any lake have a mean temperature that is statistically distinct from all the other lakes?
 
->Answer:
+>Answer: Lakes with a p adj value above 0.05 have the same mean temperature as peter lake (Ward Lake). 
 
  
 
 17. If we were just looking at Peter Lake and Paul Lake. What's another test we might explore to see whether they have distinct mean temperatures? 
 
->Answer: 
+>Answer: We could use a two-tailed T-test.
 
 
 
@@ -263,12 +266,15 @@ TukeyHSD(Temp.Different.Lakes.anova)
 
 ```{r t.test}
 #Wrangling the data
+NTLLTR.Crampton.Ward <- NTLLTR.wrangled %>%
+  filter(lakename == "Crampton Lake" | lakename == "Ward Lake")
 
-
-
-
-
+#Format as a t-test
+#NTLLTR.Crampton.Ward$temperature_C will be our continuous dependent variable
+#NTLLTR.Crampton.Ward$lakename will be our categorical variable with two levels (2018 and 2019)
+NTLLTR.Crampton.Ward.twosample <- t.test(NTLLTR.Crampton.Ward$temperature_C ~ NTLLTR.Crampton.Ward$lakename)
+NTLLTR.Crampton.Ward.twosample
 
 ```
 
->Answer: 
+>Answer: We accept the alternative hypothesis- there is a difference between Crampton Lake and Ward Lake.
