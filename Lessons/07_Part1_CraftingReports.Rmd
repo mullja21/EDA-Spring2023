@@ -80,7 +80,8 @@ Create a table below that details the example datasets we have been using in cla
 
 Create an R chunk below that installs the package `knitr`. Instead of commenting out the code, customize the chunk options such that the code is not evaluated (i.e., not run).
 ```{r}
-install.packages('knitr')
+#importing libraries Knitr
+library(knitr)
 
 
 ```

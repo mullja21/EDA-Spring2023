@@ -1,48 +1,65 @@
 ---
 title: 'A07 - Crafting Reports'
-author: "Student_name" 
+author: "Jordan_Mullens" 
 date: "Spring 2023"
 output: pdf_document
 ---
+\tableofcontents # adds table of contents
+\listoffigures
+\listoftables
+\newpage
 
 ## Objectives:
 
 1.  More practice with R code chunk options
-1.  Gain proficiency with figures, tables (w/`Kable`) table of contents, etc.
-1.  Debugging knitting issues
+2.  Gain proficiency with figures, tables (w/`Kable`) table of contents, etc.
+3.  Debugging knitting issues
 
 ## Directions
 
-1.  Rename this file `<FirstLast>_A07_CraftingReports.Rmd` (replacing `<FirstLast>` with your first and last name).
-1.  Change "Student Name" on line 3 (above) with your name.
-1.  Work through the tasks, **creating code and output** that fulfill each instruction.
-1.  Be sure your code is tidy; use line breaks to ensure your code fits in the knitted output.
-1.  Be sure to **answer the questions** in this assignment document.
-1.  When you have completed the assignment, **Knit** the text and code into a single PDF file.
-1.  **Be sure that you also commit and push your final Rmd document to your GitHub account**.
+1.  Rename this file `JordanMullens_A07_CraftingReports.Rmd` (replacing `<FirstLast>` with your first and last name).
+2.  Change "Student Name" on line 3 (above) with your name.
+3.  Work through the tasks, **creating code and output** that fulfill each instruction.
+4.  Be sure your code is tidy; use line breaks to ensure your code fits in the knitted output.
+5.  Be sure to **answer the questions** in this assignment document.
+6.  When you have completed the assignment, **Knit** the text and code into a single PDF file.
+7.  **Be sure that you also commit and push your final Rmd document to your GitHub account**.
+
+
+\newpage
+
 
 ## Task 1 - Basic Markdown
 
 Create a table below summarizing the metadata of the EPA Air Quality data. The first column will be the metadata attribute item name: "Source", "Date", and "Filename". And the second column will include the metadata values: "EPA Air Quality SYstem (AQS)", "2018-2019", and "EPAair_O3_PM25_NC1819_Processed.csv". The first column should be aligned to the right and the second to the left.
 
----
+| Source    | EPA Air Quality SYstem (AQS)        |
+|-----------|-------------------------------------|
+| Date      | 2018-2019                           |
+| File Name | EPAair_O3_PM25_NC1819_Processed.csv |
+
+------------------------------------------------------------------------
 
 ## Task 2 - Import packages and data, suppressing messages
-
 Set the following R code chunk so that it runs when knit, but no messages, errors, or any output is shown. The code itself should be displayed.
 
-```{r project.setup}
+```{r project.setup, message = FALSE,	warning = FALSE}
 #Import libraries
-library(tidyverse);library(lubridate);library(here);library(knitr)
+library(tidyverse)
+library(lubridate)
+library(here)
+library(knitr)
 
 #Import EPA data (from the processed_KEY folder) & fix dates
 epa_data <- read.csv(
-  here("data","processed_KEY","EPAair_O3_PM25_NC1819_Processed.csv"),
+  here("Data/Processed_KEY","EPAair_O3_PM25_NC1819_Processed.csv"),
   stringsAsFactors = TRUE) %>% 
   mutate(Date = ymd(Date))
+
+class(epa_data$Date)
 ```
 
----
+------------------------------------------------------------------------
 
 ## Task 3: Creating tables
 
@@ -55,6 +72,8 @@ Customize the chunk options such that the code is run but is not displayed in th
 > -   Use `"$\\mu g/m^3$"` as a column name to generate a nicely formatted string via markdown/MathJax notation
 >
 > -   If your output table spans across two pages, try inserting a new line (via `\newpage`) in the markdown just before your code chunk.
+
+\newpage
 
 ```{r data.summary, echo=F}
 #Compute mean PM2.5 concentration for each county, sorted by value
@@ -73,7 +92,8 @@ summary_Ozone <- epa_data %>%
   arrange(mean_Ozone)
 
 #Use the `kable` function to produce the 2 tables
-
+kable(summary_PM25,caption = "Concentration by County: Mean PM2.5")
+kable(summary_Ozone,caption = "Concentration by County: Mean Ozone")
 
 ```
 
@@ -83,14 +103,43 @@ summary_Ozone <- epa_data %>%
 
 Create two separate code chunks that create boxplots of the distribution of Ozone levels by month using, one for only records collected in 2018 and one for records in 2019. Customize the chunk options such that the final figures are displayed but not the code used to generate the figures. In addition, the plots aligned on the left side of the page and set the figure heights so both plots fit on the same page with minimal space remaining. Lastly, add a `fig.cap` chunk option to add a caption (title) to your plot that will display underneath the figure.
 
+```{r plot.PM2.5, echo=FALSE, fig.align='left', fig.cap="Mean PM2.5 by Month", fig.height=2.5, message=FALSE, warning=FALSE}
 
+box.plot.PM2.5 <- epa_data %>% 
+  drop_na(PM2.5) %>% 
+  ggplot( 
+  aes(x=factor(Month),y=PM2.5)) +
+  geom_boxplot() +
+  labs(
+    title ='Mean PM2.5 Concentration by Month',
+    x = 'Month',
+    y = 'PM2.5 Concentration (ug/m3 LC)')
+print(box.plot.PM2.5)
+```
+
+```{r plot.ozone, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Mean Ozone by Month", fig.align='left', fig.height= 2.5 }
+
+box.plot.Ozone <- epa_data %>% 
+  drop_na(Ozone) %>% 
+  ggplot( 
+  aes(x=factor(Month),y=Ozone)) +
+  geom_boxplot() +
+  labs(
+    title ='Mean Ozone Concentration by Month',
+    x = 'Month',
+    y = 'Ozone Concentration (ppm)')
+print(box.plot.Ozone)
+
+```
 
 \newpage
 
 ## Task 4: Knit and submit.
-Add a table of contents to your document and knit to a PDF. Submit your PDF to Sakai, but also be sure to commit and push your Rmd file used to create this knit document to GitHub. In the section below, add a link to your GitHub repository. 
+
+Add a table of contents to your document and knit to a PDF. Submit your PDF to Sakai, but also be sure to commit and push your Rmd file used to create this knit document to GitHub. In the section below, add a link to your GitHub repository.
 
 ### Git Repository
 
+https://github.com/mullja21/EDA-Spring2023.git
 
 
