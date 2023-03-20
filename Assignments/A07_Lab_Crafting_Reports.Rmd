@@ -4,7 +4,8 @@ author: "Jordan_Mullens"
 date: "Spring 2023"
 output: pdf_document
 ---
-\tableofcontents # adds table of contents
+
+\tableofcontents
 \listoffigures
 \listoftables
 \newpage
@@ -25,9 +26,7 @@ output: pdf_document
 6.  When you have completed the assignment, **Knit** the text and code into a single PDF file.
 7.  **Be sure that you also commit and push your final Rmd document to your GitHub account**.
 
-
 \newpage
-
 
 ## Task 1 - Basic Markdown
 
@@ -41,9 +40,10 @@ Create a table below summarizing the metadata of the EPA Air Quality data. The f
 ------------------------------------------------------------------------
 
 ## Task 2 - Import packages and data, suppressing messages
+
 Set the following R code chunk so that it runs when knit, but no messages, errors, or any output is shown. The code itself should be displayed.
 
-```{r project.setup, message = FALSE,	warning = FALSE}
+```{r project.setup, message = FALSE,	warning = FALSE, results='hide'}
 #Import libraries
 library(tidyverse)
 library(lubridate)
@@ -92,8 +92,8 @@ summary_Ozone <- epa_data %>%
   arrange(mean_Ozone)
 
 #Use the `kable` function to produce the 2 tables
-kable(summary_PM25,caption = "Concentration by County: Mean PM2.5")
-kable(summary_Ozone,caption = "Concentration by County: Mean Ozone")
+kable(summary_PM25,caption = "Concentration by County: Mean PM2.5", col.names= c("County", "$\\mu g/m^3$"))
+kable(summary_Ozone,caption = "Concentration by County: Mean Ozone",  col.names= c("County", "$\\mu g/m^3$"))
 
 ```
 
@@ -103,32 +103,35 @@ kable(summary_Ozone,caption = "Concentration by County: Mean Ozone")
 
 Create two separate code chunks that create boxplots of the distribution of Ozone levels by month using, one for only records collected in 2018 and one for records in 2019. Customize the chunk options such that the final figures are displayed but not the code used to generate the figures. In addition, the plots aligned on the left side of the page and set the figure heights so both plots fit on the same page with minimal space remaining. Lastly, add a `fig.cap` chunk option to add a caption (title) to your plot that will display underneath the figure.
 
-```{r plot.PM2.5, echo=FALSE, fig.align='left', fig.cap="Mean PM2.5 by Month", fig.height=2.5, message=FALSE, warning=FALSE}
+```{r plot.PM2.5, echo=FALSE, fig.align='left', fig.cap="Mean Ozone by Month in 2018", fig.height=2.5, message=FALSE, warning=FALSE}
 
-box.plot.PM2.5 <- epa_data %>% 
-  drop_na(PM2.5) %>% 
-  ggplot( 
-  aes(x=factor(Month),y=PM2.5)) +
-  geom_boxplot() +
-  labs(
-    title ='Mean PM2.5 Concentration by Month',
-    x = 'Month',
-    y = 'PM2.5 Concentration (ug/m3 LC)')
-print(box.plot.PM2.5)
-```
-
-```{r plot.ozone, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Mean Ozone by Month", fig.align='left', fig.height= 2.5 }
-
-box.plot.Ozone <- epa_data %>% 
+box.plot.Ozone.2018 <- epa_data %>% 
+  filter(Year==2018) %>%
   drop_na(Ozone) %>% 
   ggplot( 
   aes(x=factor(Month),y=Ozone)) +
   geom_boxplot() +
   labs(
-    title ='Mean Ozone Concentration by Month',
+    title ='Mean Ozone Concentration by Month in 2018',
     x = 'Month',
     y = 'Ozone Concentration (ppm)')
-print(box.plot.Ozone)
+print(box.plot.Ozone.2018)
+
+```
+
+```{r plot.ozone, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Mean Ozone by Month in 2019", fig.align='left', fig.height= 2.5 }
+
+box.plot.Ozone.2019 <- epa_data %>% 
+  filter(Year==2019) %>%
+  drop_na(Ozone) %>% 
+  ggplot( 
+  aes(x=factor(Month),y=Ozone)) +
+  geom_boxplot() +
+  labs(
+    title ='Mean Ozone Concentration by Month in 2019',
+    x = 'Month',
+    y = 'Ozone Concentration (ppm)')
+print(box.plot.Ozone.2019)
 
 ```
 
@@ -140,6 +143,4 @@ Add a table of contents to your document and knit to a PDF. Submit your PDF to S
 
 ### Git Repository
 
-https://github.com/mullja21/EDA-Spring2023.git
-
-
+<https://github.com/mullja21/EDA-Spring2023.git>
