@@ -31,7 +31,7 @@ The packages we'll need for this lesson are below. Install as necessary and ensu
 #Import the tidyverse library 
 library(tidyverse, quietly = TRUE)
 library(lubridate)
-
+library(dplyr)
 #install.packages('sf')
 library(sf)
 #install.packages('leaflet')
@@ -41,11 +41,21 @@ library(mapview); mapviewOptions(fgb = FALSE)
 
 #Disable on-the-fly projections
 sf::sf_use_s2(FALSE)
+
+
 ```
 
 ---
 
 # 2. REPRESENTING SPATIAL DATA IN R
+#csv files cannot store spatial objects, so we have to use st_read to read spatial data frames with geometries
+#Can still use joins to combine data sets- it becomes a data frame operation
+#spatial aggregation is groub_by() and summarize()
+#coordinate system transformations st_transform()
+#intersecting data use st_filtered(...,..pred) select all the rows that meet the spatial criteria. pred is the predicate and the default is boarder intersections. This function just selects the data and doesn't manipulate it 
+#clipping data use st_intersection()
+#spatial selection st_intersects()
+
 
 ## 2.1 Simple feature geometry (sfg)
 The `sf` package enables a new data type to be included in our data frames - the **geometry** data type. Geometries are comprised of coordinate pairs that form to create **geometric objects**. These can be:
@@ -75,6 +85,7 @@ Let's read some geospatial data into our coding environment. The file we'll read
 ```{r Read in road data}
 #Read a spatial dataset
 GasPlants <- st_read('https://opendata.arcgis.com/datasets/a0722062315143a7980cebb79a204781_4.geojson')
+
 #Alternative
 #GasPlants <- st_read('./Data/Spatial/Manufactured_Gas_Plant_Sites.geojson')
 
@@ -119,6 +130,15 @@ EPAair.sf <- EPAair.sites %>%
            crs=4326)
 
 #View the data using the methods above...
+#View using sf plot
+plot(EPAair.sf['status'])
+
+#View using ggplot
+ggplot(data=EPAair.sf) + geom_sf()
+
+#View using mapview
+mapview(EPAair.sf)
+
 
 ```
 

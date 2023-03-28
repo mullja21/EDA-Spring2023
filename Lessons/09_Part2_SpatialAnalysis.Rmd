@@ -87,18 +87,20 @@ The `sf` package allows us to read many existing data formats, including ArcGIS 
 Below we read in the USA counties shapefile, filtering for just the NC features (NC has a state FIPS code of "37"...). We also see that `sf` plays nice with "tidyverse" syntax (e.g. pipes) and functions (e.g. filter). The `sf` package also includes some new spatial methods for exploring our data (e.g. `st_bbox` which draws a bounding box around all spatial features).
 
 ```{r read.filtered.records.from.shapefile.to.sf.object}
-#
-counties_sf<- st_read('./Data/Spatial/cb_2018_us_county_20m.shp') %>% 
+#read the spatial data; don't need strings as factors because this is a binary data set and then we can start to use the dplyr commands and star to manipulate the data set statefp= is the fps code/ unique code for every state
+
+counties_sf <- st_read('./Data/Spatial/cb_2018_us_county_20m.shp') %>% 
   filter(STATEFP == 37) #Filter for just NC Counties
 
-#
+
+#Retrieve column names
 colnames(counties_sf)
 
-#
+#st is the spatial command
 st_crs(counties_sf) 
 
 
-#
+#number of rows
 nrow(counties_sf)
 
 #Reveal the extent of this dataset via the st_bbox() function
@@ -109,6 +111,9 @@ head(counties_sf)
 
 #Plot the data, colored by area of land in each county
 mapView(counties_sf, zcol = "AWATER")
+
+#can't do an interactive map in pdf format; must knit an interactive map into an html file
+
 ```
 
 ### 2.2.2 Read in and explore 8-digit HUC watersheds for NC
@@ -116,11 +121,12 @@ mapView(counties_sf, zcol = "AWATER")
 *Now you try*: Read in the NC 8-Digit HUC dataset: `./Data/Spatial/NCHUC8.shp` into a variable named `huc8_sf`. What CRS does this dataset use? Is it the same as the counties dataset? What columns are included in this dataset? What do these features look like on a map?
 
 ```{r read HUCs shapefile}
-#Read the shapefile into an sf dataframe named "huc8_sf"
+#Read the shapefile into an sf dataframe named "huc8_sf"; 
+huc8_sf <- st_read('./Data/Spatial/NCHUC8.shp')
 
 
 #Reveal the columns
-
+colnames(counties_sf)
 
 #Check the CRS
 
@@ -129,7 +135,11 @@ mapView(counties_sf, zcol = "AWATER")
 head(huc8_sf)
 
 #View the data as a map, colored by the acreage in each
+ggplot() +
+  geom_sf(data=huc8_sf, aes(fill=ACRES)) +
+  scale_fill_distiller(palette = "Y10rRd")
 
+mapView(huc8_sf, zcol = 'ACRES')
 
 
 
@@ -141,13 +151,16 @@ head(huc8_sf)
 
 ```{r Select the Upper Neuse HUC 8}
 #Read the shapefile into an sf dataframe
+upper.neuse_sf <- st_read('./Data/Spatial/NCHUC8.shp') %>% 
+  filter(SUBBASIN == 'Upper Neuse') #Filter for just Upper Neuse
 
 
+#Create a map; must modify colors in ggplot 
+ggplot() +
+  geom_sf(data=upper.neuse_sf, aes(fill = ACRES)) +
+  scale_fill_distiller(palette = "Y10rRd")
 
-#Create a map
-
-
-
+mapView(huc8_sf, zcol = 'ACRES') + mapView(upper.neuse_sf, zcol = 'ACRES')
 
 ```
 
@@ -245,13 +258,14 @@ ggplot() +
 
 ```{r}
 #Compute HUC8 wind energy
+#If we don't tell the R data set to read in the colclasses, we won't be able to set the data type when r reads in the data set. so we need to tell it to read in as a factor and then group by first 8 characters by creating a column for it.
 wind_raw <- read.csv('https://raw.githubusercontent.com/ENV859/EnviroAtlasData/main/Wind_Energy.csv',
   colClasses = c('HUC_12' = 'factor')) %>%  
   mutate(HUC_8 = substr(HUC_12,1,8)) %>% 
   group_by(HUC_8) %>% 
   summarize(SumWindEnergy = sum(AvgWindEnergy))
   
-#Join to HUC_8 features
+#Join to HUC_8 features; just using data frame commands
 huc8_sf_join = merge(x = huc8_sf,
                      y = wind_raw,
                      by.x = 'HUC_8',
@@ -319,7 +333,7 @@ What I'm getting at is: it's often a good idea to project data before doing spat
 On top of projecting any geographic data to adjust for the limitations of the software, you'll also be wise to ensure all use the same CRS. This can be done with the `st_transform` command, supplying the EPSG code of the CRS that you want your data to be in. Let's get our main five sf objects all into a consistent CRS.
 
 ```{r Transform the datasets to other coordinate reference systems}
-#Convert all to UTM Zone 17 (crs = 26917)
+#Convert all to UTM Zone 17 (crs = 26917); this creates a new set of data frames, but the coordinate columns will all be different; everything will now have planar coordinate systems instead of the geographic coordinates. It's imporant to ensure things are speaking in the same language and using the same coordinate system
 epa_sf_utm <-      st_transform(epa_pm25_sites_sf, crs = 26917)
 counties_sf_utm <- st_transform(counties_sf, crs = 26917)
 state_sf_utm <-    st_transform(state_sf,crs = 26917)
@@ -334,7 +348,7 @@ Now that our data are all in a common planar coordinate systems, let's examine w
 In the exercise below, we'll subset one of the HUCs (Upper Neuse), and explore counties that spatially overlap with this selected HUC. You'll see there are two ways to subset data spatially.
 
 ```{r spatial.overlap.exercises}
-#Clip the HUC2 data set by the NC State boundary dataset
+#Clip the HUC2 data set by the NC State boundary datase
 neuse_sf <- huc2_utm %>% 
   filter(DWQ_Basin == "Neuse")
 
@@ -350,12 +364,22 @@ myMap
 #Select intersecting counties using matrix subsetting
 neuse_intersect_1 <- counties_sf_utm[neuse_sf,]
 
-#Select intersecting counties using the `filter()` command
+#Select intersecting counties using the `filter()` command. This is the old style.
 neuse_intersect_2 <- counties_sf_utm %>% 
   filter(st_intersects(x = ., y = neuse_sf, sparse = FALSE))
 
+
+#Select intersecting counties using the `filter()` command. This is the new style of doing the same thing as the above and it is a simpler syntax. Can set the predicate to st_touches, st_within, or st_overlaps
+neuse_intersect_3 <- counties_sf_utm %>% 
+  st_filter(neuse_sf)
+
+
 #View the result
 myMap + mapview(neuse_intersect_2, alpha.regions = 0)
+
+#view the result of the new way of doing it
+myMap + mapview(neuse_intersect_3, alpha.regions = 0)
+
 
 #Actually intersect the counties (not just select those that intersect)
 neuse_counties_sf <- neuse_sf %>% 
@@ -374,7 +398,6 @@ mapview(neuse_counties_sf, zcol='Area_m2')
 
 ```{r EXERCISE: Clipping}
 #Select the Triangle County from the 
-
 
   
 #Grab the intersecting HUC_8s
