@@ -150,7 +150,7 @@ sfg_GraingerHall <- st_point(c(-78.9427,36.00465))
 class(sfg_GraingerHall)
 mapview(sfg_GraingerHall)
 
-#Upgrade to a simple feature geometry column by adding a crs 
+#Upgrade to a simple feature geometry column by adding a crs; 4326 is a database number from epsg.io which describes the position in the specific coordinate system
 sfc_GraingerHall <- st_sfc(sfg_GraingerHall,crs=4326)
 class(sfc_GraingerHall)
 mapview(sfc_GraingerHall)
@@ -175,7 +175,7 @@ Let's explore:
 ## EXERCISE: Buffering - a simple spatial analyis
 "Buffering" a simple feature extends the area outward a specified distance. The code below buffers Grainger Hall 1 "unit". 
 ```{r buffer Grainger hall}
-#Buffer Grainger Hall 1 unit
+#Buffer Grainger Hall 1 unit. the 1 refers to degrees of lat and long; so 1 degree of each; buffering it in spherical coordinates
 the_buffer <- sf_GraingerHall %>% st_buffer(1)
 
 #View the result
@@ -243,25 +243,27 @@ Say we want to the distance between our EPA sites and the nearest Gas Plant. We 
 
 
 ```{r Transform the dataset}
-#Transform the datasets to use UTM 17 N, WGS84
+#Transform the datasets to use UTM 17 N, WGS84; this will enable us to measure the distance in meters
 EPAair.sf.utm <- st_transform(EPAair.sf,32617)
 GasPlants.utm <- st_transform(GasPlants,32617)
 
-#Have a look at the coordinate associated with the geometries
+
+#Have a look at the coordinate associated with the geometries; confirm that its 
 EPAair.sf.utm$geometry[1]
 
-#Plot the data
+#Plot the data; Axis are still written in degrees, but it's projected and that's why it looks a little distorted 
 ggplot() +
   geom_sf(data = EPAair.sf.utm,color='blue') + 
   geom_sf(data = GasPlants.utm,color='red',shape='O') 
 
-#Create a distance matrix between the point in each dataset
+#Create a distance matrix between the point in each dataset; pariwise creates matrix
 distance_matrix <- st_distance(EPAair.sf.utm, GasPlants.utm, pairwise=T)
 
-#Compute the mean of each row (each EPA site)
+#Compute the mean of each row (each EPA site) rowmeans reduces the dataset to means of the rows
 mean_distances <-  rowMeans(distance_matrix)
 
-#Add as a column to the epa sites
+#Add as a column to the epa sites; bind the mean distance to utm
+
 EPAair.sf.utm  <-  EPAair.sf.utm %>% 
   bind_cols("AvgDistToGasPlant" = mean_distances)
 

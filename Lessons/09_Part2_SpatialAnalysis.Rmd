@@ -49,6 +49,7 @@ library(lubridate)
 library(sf)
 library(mapview); mapviewOptions(fgb = FALSE)
 library(RColorBrewer)
+library(dplyr)
 ```
 
 # 2 READING IN SPATIAL DATA
@@ -76,6 +77,10 @@ st_crs(epa_pm25_sites_sf)$epsg
 #Plot the data
 ggplot(data=epa_pm25_sites_sf) +
   geom_sf()
+
+mapview(epa_pm25_sites_sf)
+
+#spatial features are made of geometries, attributes, and coordinate reference systems
 ```
 
 ## 2.2 Reading shapefiles into R with `sf`
@@ -110,7 +115,7 @@ st_bbox(counties_sf)
 head(counties_sf)
 
 #Plot the data, colored by area of land in each county
-mapView(counties_sf, zcol = "AWATER")
+mapView(counties_sf, zcol = "ALAND")
 
 #can't do an interactive map in pdf format; must knit an interactive map into an html file
 
@@ -124,6 +129,8 @@ mapView(counties_sf, zcol = "AWATER")
 #Read the shapefile into an sf dataframe named "huc8_sf"; 
 huc8_sf <- st_read('./Data/Spatial/NCHUC8.shp')
 
+#Reveal the extent of this dataset via the st_bbox() function
+st_bbox(huc8_sf)
 
 #Reveal the columns
 colnames(counties_sf)
@@ -136,12 +143,9 @@ head(huc8_sf)
 
 #View the data as a map, colored by the acreage in each
 ggplot() +
-  geom_sf(data=huc8_sf, aes(fill=ACRES)) +
-  scale_fill_distiller(palette = "Y10rRd")
+  geom_sf(data=huc8_sf, aes(fill=ACRES))
 
 mapView(huc8_sf, zcol = 'ACRES')
-
-
 
 ```
 
@@ -155,12 +159,8 @@ upper.neuse_sf <- st_read('./Data/Spatial/NCHUC8.shp') %>%
   filter(SUBBASIN == 'Upper Neuse') #Filter for just Upper Neuse
 
 
-#Create a map; must modify colors in ggplot 
-ggplot() +
-  geom_sf(data=upper.neuse_sf, aes(fill = ACRES)) +
-  scale_fill_distiller(palette = "Y10rRd")
-
-mapView(huc8_sf, zcol = 'ACRES') + mapView(upper.neuse_sf, zcol = 'ACRES')
+#Create a map
+mapView(huc8_sf, col.regions = 'green') + mapView(upper.neuse_sf, col.regions ='blue')
 
 ```
 
@@ -184,7 +184,7 @@ colnames(powerplants_sf)
 nrow(powerplants_sf)
 
 #View on a map - specify the geometry column to draw faster
-plot(powerplants_sf$geometry)
+mapview(powerplants_sf$geometry)
 
 #Filter for just powerplants found in NC
 nc_powerplants_sf <- powerplants_sf %>% 
@@ -220,7 +220,7 @@ Brief notes: - "E\_" are estimates; "M\_" are margins of error - "EP\_ are estim
 We'll focus on just a few variables: Estimates of people in poverty ("E_POV") and of minority population ("E_MINRTY"), keeping the location attributes as well.
 
 ```{r join.attributes.to.spatial features}
-#Read the 2018 SVI county-level dataset for NC
+#Read the 2018 SVI county-level dataset for NC; this is a database join. It looks for similarities in the data set and combines them
 svi2018_nc_raw <- read.csv(
   'https://svi.cdc.gov/Documents/Data/2018_SVI_Data/CSV/States_Counties/NorthCarolina_COUNTY.csv',
   colClasses = c('FIPS' = 'factor')) %>% 
@@ -229,7 +229,7 @@ svi2018_nc_raw <- read.csv(
 #Check structure
 str(svi2018_nc_raw)
 
-#Join the SVI attributes to the county spatial features
+#Join the SVI attributes to the county spatial features; add new columns with the two fields that are in common (line up the GEOID and FIPS)
 counties_sf_join <-  merge(x = counties_sf,
                            y = svi2018_nc_raw, 
                            by.x = "GEOID", 
@@ -239,13 +239,13 @@ counties_sf_join <-  merge(x = counties_sf,
 counties_sf_join <- counties_sf %>% 
   left_join(svi2018_nc_raw, by = c("GEOID" = "FIPS") )
 
-#View with mapview
+#View with mapview; EPOV= people in poverty; 
 mapview(counties_sf_join, 
         zcol = 'E_POV', 
         col.regions = brewer.pal(2, 'RdBu')) + 
   mapview(epa_pm25_sites_sf, cex = 'maxPM')
 
-#view with ggplot
+#view with ggplot; sized by particulate matter
 ggplot() + 
   geom_sf(data=counties_sf_join,aes(fill = E_POV),alpha=0.3) + 
   scale_fill_gradient2(low="red",high="blue",midpoint = 60000) + 
@@ -258,26 +258,31 @@ ggplot() +
 
 ```{r}
 #Compute HUC8 wind energy
-#If we don't tell the R data set to read in the colclasses, we won't be able to set the data type when r reads in the data set. so we need to tell it to read in as a factor and then group by first 8 characters by creating a column for it.
-wind_raw <- read.csv('https://raw.githubusercontent.com/ENV859/EnviroAtlasData/main/Wind_Energy.csv',
+#If we don't tell the R data set to read in the colclasses, we won't be able to set the data type when r reads in the data set. so we need to tell it to read in as a factor and then group by first 8 characters by creating a column for it. substr specifies a string grabbing from first to 8th value
+wind_energy_huc8 <- read.csv('https://raw.githubusercontent.com/ENV859/EnviroAtlasData/main/Wind_Energy.csv',
   colClasses = c('HUC_12' = 'factor')) %>%  
   mutate(HUC_8 = substr(HUC_12,1,8)) %>% 
   group_by(HUC_8) %>% 
-  summarize(SumWindEnergy = sum(AvgWindEnergy))
+  summarize(kWhkm2day = sum(kWhkm2day))
   
 #Join to HUC_8 features; just using data frame commands
-huc8_sf_join = merge(x = huc8_sf,
-                     y = wind_raw,
-                     by.x = 'HUC_8',
-                     by.y = 'HUC_8')
+huc8_sf_wind <- huc8_sf %>%
+  left_join(wind_energy_huc8, by = c('HUC_8', 'HUC_8'))
 
 #View the outputs
 ggplot(data=huc8_sf_join) +
   geom_sf(aes(fill=SumWindEnergy)) +
   labs(
     title='Wind energy by HUC 8',
-    fill ='MW/year'
-  )
+    fill ='MW/year')
+
+mapview(huc8_sf_join,
+        y=wind_energy_huc8,
+        by.x = "HUC_8",
+        by.y = "HUC_8")
+
+mapview(huc8_sf_join,
+        zcol = 'kWhkm2day')
 
 ```
 
