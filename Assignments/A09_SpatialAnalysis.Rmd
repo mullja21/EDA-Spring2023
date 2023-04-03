@@ -71,12 +71,13 @@ code is `31` (as North Carolina's was `37`).
 5.  Plot the records as a map (using `mapview` or `ggplot`)
 
 ```{r Read the county data into an sf dataframe}
-#3. Read in Counties shapefile into an sf dataframe, filtering for just NE counties
+#3. Read in Counties shapefile into an sf dataframe, filtering for just NE 
 counties.NB_sf <- st_read('./Data/Spatial/cb_2018_us_county_20m.shp') %>% 
   filter(STATEFP == 31)
 
 
 #4. Reveal the CRS of the counties features
+st_crs(counties.NB_sf)
 st_crs(counties.NB_sf)$epsg
 
 #5. Plot the data
@@ -90,10 +91,11 @@ mapView(counties.NB_sf, zcol = "ALAND")
     associated? (Tip: look the EPSG code on
     <https://spatialreference.org>)
 
-> ANSWER: EPSG:4269, North_American_Datum_1983. It is a geographic CRS
-> not a projected one.
+> ANSWER: EPSG:4269, North_American_Datum_1983. It is a geographic CRS not a 
+projected one.
 
-### Read in gage locations csv as a dataframe, then display the column names it contains
+### Read in gage locations csv as a dataframe, then display the column names 
+it contains
 
 Next we'll read in some USGS/NWIS gage location data added to the
 `Data/Raw` folder. These are in the `NWIS_SiteInfo_NE_RAW.csv` file.(See
@@ -105,7 +107,8 @@ Next we'll read in some USGS/NWIS gage location data added to the
 
 ```{r Read in USGS Gage Locations}
 #7. Read in gage locations csv as a dataframe
-NWIS.df <- read.csv("./Data/Raw/NWIS_SiteInfo_NE_RAW.csv", colClasses = c('site_no' = 'factor')) 
+NWIS.df <- read.csv("./Data/Raw/NWIS_SiteInfo_NE_RAW.csv", colClasses = 
+                      c('site_no' = 'factor')) 
 
 #8. Reveal the names of the columns
 colnames(NWIS.df)
@@ -113,8 +116,8 @@ colnames(NWIS.df)
 ```
 
 9.  What columns in the dataset contain the x and y coordinate values,
-    respectively?\
-    \> ANSWER: \>
+    respectively?
+>ANSWER: Latitude and Longitude
 
 ### Convert the dataframe to a spatial features ("sf") dataframe
 
@@ -152,9 +155,10 @@ colnames(NWIS.sf)
 ```{r Plot the spatial features, echo=TRUE}
 #13. Plot the gage locations atop the county features
 ggplot() + 
-  geom_sf(data=counties.NB_sf, color = 'darkblue') + 
+  geom_sf(data=counties.NB_sf, color = 'darkblue', fill = 'lightblue') + 
   geom_sf(data=NWIS.sf, color = 'darkgreen') +
-  labs(title = "NWIS Gage Locations in Nebraska EPGS 4269", subtitle = "Jordan Mullens",
+  labs(title = "NWIS Gage Locations in Nebraska EPGS 4269", subtitle = 
+         "Jordan Mullens",
        x = "Latitude",
        y = "Longitude") 
 
@@ -188,7 +192,8 @@ recorded during the recent flood event. This file is titled
 
 ```{r}
 #14. Read the site flow data into a data frame
-NB.flow <- read.csv("./Data/Raw/NWIS_SiteFlowData_NE_RAW.csv", colClasses = c('site_no' = 'factor')) %>%
+NB.flow <- read.csv("./Data/Raw/NWIS_SiteFlowData_NE_RAW.csv", colClasses = 
+                      c('site_no' = 'factor')) %>%
   group_by(site_no, station_nm) %>% 
   summarize(mean.gage_ht = mean(gage_ht))
 
@@ -215,6 +220,7 @@ gage heights spatially. 19. Plot the gage sites on top of counties
 height by color, shape, other visualization technique.
 
 ```{r}
+#19
 #Map the points, sized by gage height
 mapview(counties.NB_sf, col.regions = 'cornsilk4') + 
   mapview(NB.NWIS_flow, cex = 'mean.gage_ht', col.regions = "darkgreen")
@@ -238,7 +244,7 @@ We'll choose UTM Zone 14N (EPGS = 32614).
 
 ```{r}
 #20 Transform the counties and gage location datasets to UTM Zone 14
-counties.NB_utm <-      st_transform(counties.NB_sf, crs = 32614)
+counties.NB_utm <- st_transform(counties.NB_sf, crs = 32614)
 NB.NWIS.flow_utm <- st_transform(NB.NWIS_flow, crs = 32614)
 NWIS_utm <- st_transform(NWIS.sf, crs = 32614)
 
@@ -246,7 +252,8 @@ NWIS_utm <- st_transform(NWIS.sf, crs = 32614)
 ggplot() + 
   geom_sf(data=counties.NB_utm, color = 'darkblue') + 
   geom_sf(data=NWIS_utm, color = 'darkgreen') +
-  labs(title = "NWIS Gage Locations in Nebraska EPGS 32614", subtitle = "Jordan Mullens",
+  labs(title = "NWIS Gage Locations in Nebraska EPGS 32614", subtitle = 
+         "Jordan Mullens",
        x = "Latitude",
        y = "Longitude") 
 
@@ -274,7 +281,9 @@ NWIS.Douglas <- NB.NWIS.flow_utm %>%
   st_filter(Douglass_sf)
 
 #24 Plot
-mapview(counties.NB_utm, col.regions = 'cornsilk4')+ mapview(Douglass_sf, col.regions = 'lightskyblue') + mapview(NWIS.Douglas, col.regions = "darkgreen")
+mapview(counties.NB_utm, col.regions = 'cornsilk4', legend = TRUE)+ 
+  mapview(Douglass_sf, col.regions = 'lightskyblue', legend = TRUE) + 
+  mapview(NWIS.Douglas, col.regions = "darkgreen", legend = TRUE)
 
 
 ```
