@@ -60,6 +60,7 @@ To begin, we'll fetch the contents of the web site into our coding environment u
 #Fetch the web resources from the URL
 webpage <- read_html('https://www.ncwater.org/WUDC/app/WWATR/report/view/0004-0001/2020')
 webpage
+
 ```
 
 ### Understanding web pages from a coding standpoint
@@ -97,6 +98,8 @@ the_registrant <- webpage %>%
   html_nodes(".table tr:nth-child(1) td:nth-child(2)") %>% 
   html_text()
 the_registrant
+
+
 ```
 
 EXERCISE:
@@ -112,6 +115,8 @@ the_facility_type <- webpage %>%
   html_nodes("tr:nth-child(2) .left~ .left+ td.left") %>% 
   html_text()
 the_facility_type
+
+
 ```
 
 Next, we'll extract multiple items from the web page into a list object. Using Selector Gadget, highlight in yellow or green all the Average Daily Withdrawal (MGD) values from the web page. Tip: Hold the <ctrl> key down while clicking elements to add/subtract regions from selected regions.
@@ -155,6 +160,8 @@ ggplot(df_withdrawals,aes(x=Date,y=Avg_Withdrawals_mgd)) +
        subtitle = the_facility_name,
        y="Withdrawal (mgd)",
        x="Date")
+
+
 ```
 
 
