@@ -104,7 +104,7 @@ MGD
 
 ```{r create.a.dataframe.from.scraped.data}
 #4
-df_MGD <- data.frame("Month" = rep(1:12),
+df_MGD <- data.frame("Month" = c(1,5,9,2,6,10,3,7,11,4,8,12),
                              "Year" = rep(2022,12),
                              "Maximum_Day_Use" = as.numeric(MGD))
 
@@ -120,6 +120,7 @@ df_MGD <- df_MGD %>%
 ggplot(df_MGD,aes(x=Date,y=Maximum_Day_Use)) + 
   geom_line(color="blue") + 
   geom_smooth(method="loess",se=FALSE, color="darkgreen") +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b") +
   labs(title = paste("2022 Maximum Daily Water Usage Data for",PWSID),
        subtitle = water.system.name,
        y="Maximum Day Use (MGD)",
@@ -159,7 +160,7 @@ scrape.MGD <- function(the_pwsid, the_year){
   MGD <- the_website %>% html_nodes(MGD.tag) %>% html_text()
 
    #Convert to a dataframe
-  df_MGD.f <- data.frame("Month" = rep(1:12),
+  df_MGD.f <- data.frame("Month" = c(1,5,9,2,6,10,3,7,11,4,8,12),
                                "Year" = rep(the_year,12),
                                "Maximum_Day_Use" = as.numeric(MGD)) %>% 
     mutate(Water_System = !!water.system.name,
@@ -188,6 +189,7 @@ view(Durham.2015.MGD)
 Durham.2015.plot <- ggplot(Durham.2015.MGD,aes(x=Date,y=Maximum_Day_Use)) + 
   geom_line(color="blue") + 
   geom_smooth(method="loess",se=FALSE, color="darkgreen") +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b") +
   labs(title = paste("2015 Maximum Daily Water Usage Data for",PWSID),
        subtitle = water.system.name,
        y="Maximum Day Use (MGD)",
@@ -203,10 +205,11 @@ print(Durham.2015.plot)
 Asheville.2015.MGD <- scrape.MGD('01-11-010', 2015)
 view(Asheville.2015.MGD)
 
-#plotting Asheville Data
+#plotting Asheville info to check the data
 Asheville.2015.plot <- ggplot(Asheville.2015.MGD,aes(x=Date,y=Maximum_Day_Use)) + 
-  geom_line(color="blue") + 
-  geom_smooth(method="loess",se=FALSE, color="darkgreen") +
+  geom_line(color="darkgreen") + 
+  geom_smooth(method="loess",se=FALSE, color="sienna") +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b") +
   labs(title = paste("2015 Maximum Daily Water Usage Data for",PWSID),
        subtitle = water.system.name,
        y="Maximum Day Use (MGD)",
@@ -223,7 +226,9 @@ Ash.Dur.2015.plot <- ggplot(Ash.Dur.2015.data,
                                 y=Maximum_Day_Use, 
                                 color= Water_System)) + 
   geom_line() +
-  ylim(20, 60) +
+  ylim(15, 60) +
+  scale_color_manual(values=c('darkgreen','blue')) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b") +
   labs(title = paste("2015 Maximum Daily Water Usage Data for",PWSID),
        subtitle = water.system.name,
        y="Maximum Day Use (MGD)",
@@ -252,8 +257,9 @@ Asheville.11.yr <- bind_rows(the_Asheville_dfs)
 Asheville.11yr.plot <- ggplot(Asheville.11.yr,aes(x=Date,y=Maximum_Day_Use)) + 
   geom_line(color="blue") + 
   geom_smooth(method="loess",se=FALSE, color="darkgreen") +
-  labs(title = paste("2010 to 2021 Maximum Daily Water Usage Data for",PWSID),
-       subtitle = water.system.name,
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = paste("2010 to 2021 Maximum Daily Water Usage Data for Asheville"),
        y="Maximum Day Use (MGD)",
        x="Date")
 print(Asheville.11yr.plot)
